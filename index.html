@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodegaPro — Control de Inventario y Reabastecimiento</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-icon">BP</div>
+        <div class="brand-title">
+          <h1>BodegaPro — Control de Inventario Comercial</h1>
+          <p>Digitalización de catálogo, control de existencias y alertas de reorden en tiempo real</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge-pill">HTML5 + CSS3 + JS Puro</span>
+        <span class="badge-pill">Clases 6, 7 y 8</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Banner de Notificaciones Dinámico -->
+    <div id="toast-banner" class="toast-banner" role="status" aria-live="polite">
+      <span id="toast-text">Sistema listo para operar.</span>
+      <button type="button" id="toast-close" class="toast-close" aria-label="Cerrar aviso">&times;</button>
+    </div>
+
+    <!-- Actividad 6: Resumen Estadístico y Cálculos Automáticos -->
+    <section class="stats-grid" aria-label="Indicadores clave del inventario">
+      <article class="stat-card">
+        <span class="stat-label">SKUs Registrados</span>
+        <div class="stat-value" id="stat-total-skus">0</div>
+        <span class="stat-sub">Referencias activas en catálogo</span>
+      </article>
+      <article class="stat-card success">
+        <span class="stat-label">Unidades Físicas Totales</span>
+        <div class="stat-value" id="stat-total-unidades">0</div>
+        <span class="stat-sub">Suma acumulada en almacén</span>
+      </article>
+      <article class="stat-card accent">
+        <span class="stat-label">Valor Total del Inventario</span>
+        <div class="stat-value" id="stat-valor-total">$0.00</div>
+        <span class="stat-sub">Cálculo automático (Precio × Stock)</span>
+      </article>
+      <article class="stat-card danger">
+        <span class="stat-label">Alertas de Reabastecimiento</span>
+        <div class="stat-value" id="stat-alertas-stock">0</div>
+        <span class="stat-sub">Productos con Stock &le; Stock Mínimo</span>
+      </article>
+    </section>
+
+    <div class="workspace-grid">
+      <!-- Actividad 3 y 5: Formulario de Captura (7 campos) y Validaciones -->
+      <section class="panel" aria-labelledby="titulo-formulario">
+        <div class="panel-header">
+          <h2 id="titulo-formulario">Ficha de Producto</h2>
+          <span id="mode-indicator" class="mode-indicator">Modo: Nuevo Registro</span>
+        </div>
+        <div class="panel-body">
+          <form id="form-producto" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sku">Código SKU <span class="req">*</span></label>
+                <input type="text" id="sku" name="sku" placeholder="Ej. ALM-015" maxlength="7">
+                <div class="field-hint">Formato: 3 letras - 3 dígitos</div>
+                <div id="error-sku" class="error-msg"></div>
+              </div>
+              <div class="form-group">
+                <label for="categoria">Categoría <span class="req">*</span></label>
+                <select id="categoria" name="categoria">
+                  <option value="">Seleccionar...</option>
+                  <option value="Alimentos y Bebidas">Alimentos y Bebidas</option>
+                  <option value="Limpieza y Hogar">Limpieza y Hogar</option>
+                  <option value="Equipos y Accesorios">Equipos y Accesorios</option>
+                  <option value="Empaques y Bolsas">Empaques y Bolsas</option>
+                </select>
+                <div id="error-categoria" class="error-msg"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="nombre">Nombre Comercial del Producto <span class="req">*</span></label>
+              <input type="text" id="nombre" name="nombre" placeholder="Ej. Arroz Selecto Grano Largo 5kg">
+              <div id="error-nombre" class="error-msg"></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="precio">Precio Unitario (USD) <span class="req">*</span></label>
+                <input type="number" id="precio" name="precio" step="0.01" min="0.01" placeholder="Ej. 15.50">
+                <div id="error-precio" class="error-msg"></div>
+              </div>
+              <div class="form-group">
+                <label for="stock">Stock Actual <span class="req">*</span></label>
+                <input type="number" id="stock" name="stock" step="1" min="0" placeholder="Ej. 24">
+                <div id="error-stock" class="error-msg"></div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="stockMinimo">Stock Mínimo (Alerta) <span class="req">*</span></label>
+                <input type="number" id="stockMinimo" name="stockMinimo" step="1" min="1" placeholder="Ej. 8">
+                <div id="error-stockMinimo" class="error-msg"></div>
+              </div>
+              <div class="form-group">
+                <label for="proveedorEmail">Email Proveedor <span class="req">*</span></label>
+                <input type="email" id="proveedorEmail" name="proveedorEmail" placeholder="ventas@proveedor.com">
+                <div id="error-proveedorEmail" class="error-msg"></div>
+              </div>
+            </div>
+
+            <div class="subtotal-preview">
+              <span>Valor estimado del lote:</span>
+              <strong id="preview-subtotal">$0.00</strong>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="btn-submit" class="btn btn-primary">Registrar Producto</button>
+              <button type="button" id="btn-cancelar" class="btn btn-secondary">Limpiar</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Actividad 2 y 4: Tabla Dinámica del DOM y Filtros Interactivos -->
+      <section class="panel" aria-labelledby="titulo-catalogo">
+        <div class="panel-header">
+          <h2 id="titulo-catalogo">Catálogo Activo e Inventario en Memoria</h2>
+          <span class="field-hint">Actualización instantánea del DOM</span>
+        </div>
+        <div class="panel-body">
+          <div class="toolbar">
+            <input type="text" id="input-busqueda" class="search-box" placeholder="Buscar por código SKU, nombre o correo de proveedor...">
+            <select id="filtro-categoria" class="filter-select" aria-label="Filtrar por categoría">
+              <option value="TODAS">Todas las categorías</option>
+              <option value="Alimentos y Bebidas">Alimentos y Bebidas</option>
+              <option value="Limpieza y Hogar">Limpieza y Hogar</option>
+              <option value="Equipos y Accesorios">Equipos y Accesorios</option>
+              <option value="Empaques y Bolsas">Empaques y Bolsas</option>
+            </select>
+            <select id="filtro-estado" class="filter-select" aria-label="Filtrar por estado de stock">
+              <option value="TODOS">Todos los estados</option>
+              <option value="OPTIMO">Stock Óptimo</option>
+              <option value="BAJO">Por Reordenar (Stock Bajo)</option>
+              <option value="AGOTADO">Agotado (Stock 0)</option>
+            </select>
+            <button type="button" id="btn-limpiar-filtros" class="btn btn-secondary btn-sm">Restablecer</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="inventory-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Producto / Proveedor</th>
+                  <th>Categoría</th>
+                  <th>Precio</th>
+                  <th>Existencia</th>
+                  <th>Subtotal / Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-inventario-body">
+                <!-- Filas inyectadas dinámicamente por app.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="category-breakdown" class="category-breakdown" aria-label="Desglose por categoría">
+            <!-- Chips generados dinámicamente por app.js -->
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
